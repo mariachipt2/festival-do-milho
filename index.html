@@ -505,15 +505,7 @@ button{cursor:pointer;border:none;font-family:inherit}
           <input class="fi" id="cfkp" placeholder="0000" maxlength="4" type="tel" style="letter-spacing:6px;text-align:center;font-size:18px">
           <div class="fh">PIN para os ajudantes acessarem o controle de estoque (padrão: 0000)</div>
         </div>
-        <div class="fg">
-          <label class="fl">🔗 Supabase URL</label>
-          <input class="fi" id="cfsu" placeholder="https://xxxx.supabase.co">
-        </div>
-        <div class="fg">
-          <label class="fl">🔑 Supabase Anon Key</label>
-          <input class="fi" id="cfsk" placeholder="eyJhbGci...">
-          <div class="fh">Project Settings → API → anon / public</div>
-        </div>
+
         <div class="fg">
           <label class="fl">🔒 Nova senha admin</label>
           <input class="fi" id="cfap" type="password" placeholder="deixe em branco para não alterar">
@@ -1173,8 +1165,6 @@ function loadConf(){
   document.getElementById('cfmn').value=CFG.pixName;
   document.getElementById('cfct').value=CFG.pixCity;
   document.getElementById('cfkp').value=CFG.kitchenPin;
-  document.getElementById('cfsu').value=CFG.sbUrl;
-  document.getElementById('cfsk').value=CFG.sbKey;
   document.getElementById('cfap').value='';
 }
 async function saveConf(){
@@ -1182,8 +1172,6 @@ async function saveConf(){
   CFG.pixName=document.getElementById('cfmn').value.trim()||'FESTIVAL DO MILHO';
   CFG.pixCity=document.getElementById('cfct').value.trim()||'SAO PAULO';
   CFG.kitchenPin=document.getElementById('cfkp').value.trim()||'0000';
-  CFG.sbUrl=document.getElementById('cfsu').value.trim();
-  CFG.sbKey=document.getElementById('cfsk').value.trim();
   const np=document.getElementById('cfap').value;if(np)CFG.adminPass=np;
   await DB.setSetting('cfg',CFG);
   initSB();updSyncUI();

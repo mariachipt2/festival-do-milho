@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#d97706">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Milho PDV">
+<link rel="manifest" href="manifest.json">
+<title>Festival do Milho — PDV</title>
+<style>
+:root{--y:#d97706;--yd:#b45309;--yl:#fef3c7;--g:#16a34a;--r:#dc2626;--gr:#6b7280;--bg:#f3f4f6;--w:#fff;--sh:0 2px 10px rgba(0,0,0,.1);--rd:14px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:#1f2937;overflow:hidden;touch-action:manipulation}
+.view{display:none;height:100dvh;overflow:hidden;flex-direction:column}
+.view.active{display:flex}
+button{cursor:pointer;border:none;font-family:inherit}
+
+#ob{background:#ef4444;color:#fff;text-align:center;padding:5px;font-size:12px;font-weight:600;display:none}
+#ob.on{display:block}
+
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(120px);background:#1f2937;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;z-index:9999;transition:transform .3s;white-space:nowrap;pointer-events:none}
+#toast.s{transform:translateX(-50%) translateY(0)}
+
+/* Sale success */
+#succ{display:none;position:fixed;inset:0;background:rgba(22,163,74,.96);z-index:500;align-items:center;justify-content:center;flex-direction:column;color:#fff}
+#succ.on{display:flex}
+.succ-ic{font-size:88px;animation:bounce .4s ease}
+.succ-t{font-size:26px;font-weight:800;margin-top:12px}
+.succ-v{font-size:18px;opacity:.88;margin-top:4px}
+
+/* ALERTA PRODUTO ACABOU */
+#aalert{display:none;position:fixed;inset:0;background:rgba(185,28,28,.97);z-index:600;align-items:center;justify-content:center;flex-direction:column;color:#fff;text-align:center;padding:24px}
+#aalert.on{display:flex;animation:flashin .2s ease}
+@keyframes flashin{0%{opacity:0;transform:scale(1.04)}100%{opacity:1;transform:scale(1)}}
+.aa-warn{font-size:72px;animation:bounce .4s ease}
+.aa-t{font-size:36px;font-weight:900;letter-spacing:2px;margin-top:8px;text-shadow:0 2px 8px rgba(0,0,0,.3)}
+.aa-prod{font-size:24px;font-weight:700;margin-top:10px;background:rgba(0,0,0,.2);padding:10px 20px;border-radius:14px}
+.aa-sub{font-size:16px;margin-top:8px;opacity:.85}
+.aa-btn{margin-top:24px;padding:14px 32px;border-radius:28px;background:rgba(255,255,255,.2);color:#fff;font-size:16px;font-weight:700;border:2px solid rgba(255,255,255,.4)}
+.aa-btn:active{background:rgba(255,255,255,.35)}
+
+@keyframes bounce{0%{transform:scale(0)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+
+/* LOGIN */
+#vl{background:linear-gradient(145deg,#d97706,#92400e);align-items:center;justify-content:center}
+.lbox{background:#fff;border-radius:24px;padding:28px 22px;width:92%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.lic{text-align:center;font-size:60px;margin-bottom:4px}
+.lt{text-align:center;font-size:22px;font-weight:800;color:#92400e;margin-bottom:2px}
+.ls{text-align:center;font-size:13px;color:var(--gr);margin-bottom:20px}
+.opg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
+.opb{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;background:var(--yl);border:2px solid transparent;border-radius:var(--rd);transition:all .15s}
+.opb.sel,.opb:active{border-color:var(--y);background:#fde68a;transform:scale(.97)}
+.opa{width:46px;height:46px;border-radius:50%;background:var(--y);display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;font-weight:700}
+.opn{font-size:13px;font-weight:600;color:#374151;text-align:center}
+.login-extras{display:flex;gap:8px;margin-top:14px}
+.login-extra-btn{flex:1;padding:12px;border-radius:12px;font-size:13px;font-weight:700;transition:all .15s}
+.login-extra-btn:active{transform:scale(.96)}
+.btn-kitchen{background:#dcfce7;color:var(--g)}
+.btn-admin-login{background:#f3f4f6;color:#374151}
+#pins{margin-top:14px}
+.pinl{text-align:center;font-size:14px;color:var(--gr);margin-bottom:10px}
+.pd{display:flex;justify-content:center;gap:14px;margin-bottom:14px}
+.pdot{width:16px;height:16px;border-radius:50%;border:2px solid #d1d5db;background:transparent;transition:all .15s}
+.pdot.f{background:var(--y);border-color:var(--y)}
+.pp{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pk{height:58px;border-radius:12px;background:#f3f4f6;font-size:22px;font-weight:600;display:flex;align-items:center;justify-content:center;transition:all .1s;color:#1f2937}
+.pk:active{transform:scale(.93);background:#e5e7eb}
+.pk.del{background:#fee2e2;color:var(--r)}
+.pk.adm{font-size:13px;background:#f0fdf4;color:var(--g);font-weight:700}
+
+/* SALES */
+#vs{background:var(--bg)}
+.sh{background:var(--y);color:#fff;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.shi{display:flex;flex-direction:column}
+.sht{font-size:16px;font-weight:800}
+.sho{font-size:12px;opacity:.85}
+.hact{display:flex;gap:8px;align-items:center}
+.ib{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.2);color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;transition:background .1s;flex-shrink:0}
+.ib:active{background:rgba(255,255,255,.35)}
+.cba{position:relative}
+.cbc{position:absolute;top:-4px;right:-4px;background:var(--r);color:#fff;font-size:10px;font-weight:700;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.sc{flex:1;display:flex;overflow:hidden}
+.ps{flex:1;overflow-y:auto;padding:10px;-webkit-overflow-scrolling:touch}
+.cl{font-size:12px;font-weight:700;color:var(--gr);text-transform:uppercase;letter-spacing:.5px;padding:8px 4px 6px}
+.pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:10px}
+.pc{background:#fff;border-radius:var(--rd);padding:14px 8px;text-align:center;box-shadow:var(--sh);transition:transform .1s;user-select:none;position:relative;overflow:hidden}
+.pc:active:not(.esgotado){transform:scale(.93)}
+.pe{font-size:46px;line-height:1;margin-bottom:6px}
+.pn{font-size:13px;font-weight:600;color:#374151;margin-bottom:4px;line-height:1.2}
+.ppr{font-size:15px;font-weight:700;color:var(--g)}
+.pq{position:absolute;top:6px;right:6px;background:var(--y);color:#fff;font-size:11px;font-weight:700;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+
+/* Esgotado no caixa */
+.pc.esgotado{opacity:.55;background:#fef2f2;cursor:not-allowed}
+.pc.esgotado .pe{filter:grayscale(1)}
+.pc.esgotado .ppr{color:var(--r)}
+.esg-lbl{position:absolute;top:0;left:0;right:0;background:rgba(220,38,38,.88);color:#fff;font-size:11px;font-weight:800;padding:4px;letter-spacing:.5px;text-align:center}
+
+/* CART */
+.cs{width:256px;background:#fff;display:flex;flex-direction:column;border-left:1px solid #e5e7eb;flex-shrink:0}
+.ch{padding:12px 14px;border-bottom:1px solid #e5e7eb;font-weight:700;font-size:15px;color:#374151}
+.ci{flex:1;overflow-y:auto;padding:6px;-webkit-overflow-scrolling:touch}
+.cem{text-align:center;padding:28px 12px;color:var(--gr)}
+.cei{font-size:36px;margin-bottom:6px}
+.cit{display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;margin-bottom:2px}
+.cit:hover{background:#f9fafb}
+.cie{font-size:24px;flex-shrink:0}
+.cii{flex:1;min-width:0}
+.cin{font-size:13px;font-weight:600;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cip{font-size:11px;color:var(--gr)}
+.cic{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.qb{width:28px;height:28px;border-radius:50%;background:#f3f4f6;font-size:16px;display:flex;align-items:center;justify-content:center;font-weight:700;transition:background .1s}
+.qb:active{background:#e5e7eb}
+.qb.m{color:var(--r)}
+.qb.p{color:var(--g);background:#f0fdf4}
+.qn{font-size:15px;font-weight:700;min-width:18px;text-align:center}
+.cf{border-top:1px solid #e5e7eb;padding:12px}
+.ctr{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.ctl{font-size:13px;color:var(--gr)}
+.ctv{font-size:22px;font-weight:800;color:#111827}
+.pbs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.pb{padding:12px 6px;border-radius:10px;font-size:14px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:4px;transition:all .15s}
+.pb:active{transform:scale(.95)}
+.pbi{font-size:22px}
+.pb.cash{background:#dcfce7;color:var(--g)}
+.pb.pix{background:#eff6ff;color:#1d4ed8}
+.cc{width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:8px;background:transparent;color:var(--gr);font-size:13px}
+
+@media(max-width:640px){
+  .cs{display:none;position:fixed;bottom:0;left:0;right:0;width:100%;height:72vh;border-radius:20px 20px 0 0;z-index:100;box-shadow:0 -8px 32px rgba(0,0,0,.2)}
+  .cs.open{display:flex}
+  #cov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99}
+  #cov.on{display:block}
+}
+
+/* MODALS */
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center}
+.mo.on{display:flex}
+.md{background:#fff;border-radius:24px;padding:24px 20px;width:92%;max-width:360px;text-align:center}
+.mdt{font-size:20px;font-weight:800;margin-bottom:4px}
+.mds{font-size:13px;color:var(--gr);margin-bottom:18px}
+.pxa{font-size:32px;font-weight:800;color:#1d4ed8;margin-bottom:14px}
+#pxq{display:flex;justify-content:center;margin-bottom:14px}
+#pxq canvas{border-radius:10px}
+.pxcopy{background:#eff6ff;border-radius:8px;padding:10px;font-size:11px;color:#1d4ed8;word-break:break-all;margin-bottom:14px;cursor:pointer;font-family:monospace;line-height:1.4}
+.mact{display:flex;gap:8px}
+.btn{flex:1;padding:14px;border-radius:12px;font-size:15px;font-weight:700;transition:all .15s}
+.btn:active{transform:scale(.97)}
+.btnp{background:var(--g);color:#fff}
+.btns{background:#f3f4f6;color:#374151}
+
+/* KITCHEN VIEW */
+#vk{background:#f0fdf4}
+.kh{background:var(--g);color:#fff;padding:12px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.kht{flex:1;font-size:17px;font-weight:800}
+.ktip{background:#fff;border:2px solid #bbf7d0;border-radius:12px;padding:12px 14px;margin:10px;font-size:13px;color:#166534;line-height:1.5}
+.kgrid-wrap{flex:1;overflow-y:auto;padding:0 10px 10px;-webkit-overflow-scrolling:touch}
+.kcard{cursor:pointer}
+.kcard.esg{background:#fee2e2;box-shadow:none}
+.kcard.esg .pe{filter:grayscale(1);opacity:.4}
+.kcard.esg .pn{text-decoration:line-through;color:#9ca3af}
+.kcard.esg .ppr{color:var(--r)}
+.k-badge{position:absolute;top:6px;left:6px;font-size:10px;font-weight:800;padding:2px 7px;border-radius:8px;letter-spacing:.3px}
+.k-avail{background:#dcfce7;color:var(--g)}
+.k-esg{background:#fee2e2;color:var(--r)}
+
+/* ADMIN */
+#va{background:var(--bg)}
+.ah{background:#1f2937;color:#fff;padding:12px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.aht{flex:1;font-size:17px;font-weight:800}
+.ac{flex:1;overflow-y:auto;padding:14px;-webkit-overflow-scrolling:touch}
+.as{background:#fff;border-radius:var(--rd);margin-bottom:14px;overflow:hidden;box-shadow:var(--sh)}
+.ash{padding:13px 14px;font-weight:700;font-size:14px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;justify-content:space-between}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#f3f4f6}
+.sb{background:#fff;padding:16px;text-align:center}
+.sv{font-size:24px;font-weight:800;color:var(--y)}
+.sl{font-size:11px;color:var(--gr);margin-top:2px}
+.fr{padding:10px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.fsel{flex:1;min-width:100px;padding:8px 10px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;background:#fff}
+.exb{display:flex;gap:6px}
+.eb{padding:8px 14px;border-radius:8px;font-size:13px;font-weight:700;transition:all .15s}
+.eb:active{transform:scale(.95)}
+.eb.csv{background:#dcfce7;color:var(--g)}
+.eb.xls{background:#dbeafe;color:#1d4ed8}
+.stw{overflow-x:auto}
+.st{width:100%;border-collapse:collapse;font-size:12px}
+.st th{text-align:left;padding:9px 10px;background:#f9fafb;color:var(--gr);font-weight:600;font-size:11px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;white-space:nowrap}
+.st td{padding:9px 10px;border-bottom:1px solid #f3f4f6;vertical-align:middle}
+.pb2{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.pb2.dinheiro{background:#dcfce7;color:var(--g)}
+.pb2.pix{background:#dbeafe;color:#1d4ed8}
+.sf{padding:14px}
+.fg{margin-bottom:14px}
+.fl{display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px}
+.fi{width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px}
+.fi:focus{outline:none;border-color:var(--y);box-shadow:0 0 0 2px rgba(217,119,6,.2)}
+.fh{font-size:11px;color:var(--gr);margin-top:3px}
+.oli{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid #f3f4f6}
+.ola{width:34px;height:34px;border-radius:50%;background:var(--y);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0}
+.oln{flex:1;font-weight:600;font-size:14px}
+.opin{font-size:12px;color:#9ca3af;margin-right:6px}
+.db{padding:6px 12px;border-radius:6px;background:#fee2e2;color:var(--r);font-size:12px;font-weight:600}
+.af{padding:12px 14px;display:flex;gap:8px;flex-wrap:wrap}
+.af .fi{flex:1;min-width:80px}
+.ab{padding:10px 14px;border-radius:8px;background:var(--y);color:#fff;font-weight:700;white-space:nowrap}
+.pli{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid #f3f4f6}
+.ple{font-size:26px;flex-shrink:0}
+.pli-i{flex:1}
+.pln{font-weight:600;font-size:13px}
+.plp{font-size:12px;color:var(--gr)}
+.eye-btn{background:transparent;color:#6b7280;font-size:16px;padding:2px 6px;border-radius:6px;transition:all .15s}
+.eye-btn:active{background:#f3f4f6}
+.edit-btn{padding:6px 10px;border-radius:6px;background:#fef3c7;color:#92400e;font-size:13px;font-weight:600}
+.edit-btn:active{background:#fde68a}
+.rbar-wrap{background:#f3f4f6;border-radius:6px;height:10px;overflow:hidden;margin-top:3px}
+.rbar{height:100%;border-radius:6px;transition:width .6s ease}
+.syncd{display:flex;align-items:center;gap:5px;font-size:11px}
+.sd{width:7px;height:7px;border-radius:50%}
+.sd.ok{background:var(--g)}
+.sd.pend{background:#f59e0b;animation:p 1.5s infinite}
+.sd.off{background:var(--r)}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.35}}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:4px}
+</style>
+</head>
+<body>
+
+<div id="ob">📡 Sem conexão — vendas sendo salvas localmente</div>
+<div id="toast"></div>
+
+<!-- Sale success -->
+<div id="succ">
+  <div class="succ-ic">✅</div>
+  <div class="succ-t">Venda Registrada!</div>
+  <div class="succ-v" id="succ-v"></div>
+</div>
+
+<!-- ALERTA PRODUTO ACABOU -->
+<div id="aalert">
+  <div class="aa-warn">🚨</div>
+  <div class="aa-t">ATENÇÃO!</div>
+  <div class="aa-prod" id="aa-prod">Produto</div>
+  <div class="aa-sub">Este produto está ESGOTADO</div>
+  <button class="aa-btn" onclick="document.getElementById('aalert').classList.remove('on')">OK, entendi</button>
+</div>
+
+<div id="cov" onclick="toggleCart()"></div>
+
+<!-- PIX Modal -->
+<div class="mo" id="mpix">
+  <div class="md">
+    <div class="mdt">🏦 Pagamento PIX</div>
+    <div class="mds">Mostre o QR Code para o cliente</div>
+    <div class="pxa" id="pxa"></div>
+    <div id="pxq"></div>
+    <div class="pxcopy" id="pxcopy" onclick="copyPix()">Toque para copiar o código PIX</div>
+    <div class="mact">
+      <button class="btn btns" onclick="closePix()">Cancelar</button>
+      <button class="btn btnp" onclick="confirmPix()">✅ Confirmar Pago</button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin modal -->
+<div class="mo" id="madm">
+  <div class="md">
+    <div class="mdt">🔐 Painel Admin</div>
+    <div class="mds">Digite a senha de administrador</div>
+    <input class="fi" id="admpin" type="password" placeholder="Senha" style="text-align:center;font-size:22px;letter-spacing:6px;margin-bottom:16px" autocomplete="off">
+    <div class="mact">
+      <button class="btn btns" onclick="closeAdm()">Cancelar</button>
+      <button class="btn btnp" onclick="checkAdm()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Kitchen PIN modal -->
+<div class="mo" id="mkitch">
+  <div class="md">
+    <div class="mdt">🍳 Acesso Cozinha</div>
+    <div class="mds">Digite o PIN da cozinha</div>
+    <div class="pd" style="margin-bottom:14px">
+      <div class="pdot" id="kd0"></div>
+      <div class="pdot" id="kd1"></div>
+      <div class="pdot" id="kd2"></div>
+      <div class="pdot" id="kd3"></div>
+    </div>
+    <div class="pp" style="margin-bottom:14px">
+      <button class="pk" onclick="kkp('1')">1</button>
+      <button class="pk" onclick="kkp('2')">2</button>
+      <button class="pk" onclick="kkp('3')">3</button>
+      <button class="pk" onclick="kkp('4')">4</button>
+      <button class="pk" onclick="kkp('5')">5</button>
+      <button class="pk" onclick="kkp('6')">6</button>
+      <button class="pk" onclick="kkp('7')">7</button>
+      <button class="pk" onclick="kkp('8')">8</button>
+      <button class="pk" onclick="kkp('9')">9</button>
+      <button class="pk btns" onclick="closeMod('mkitch')" style="font-size:13px">Voltar</button>
+      <button class="pk" onclick="kkp('0')">0</button>
+      <button class="pk del" onclick="kkdel()">⌫</button>
+    </div>
+  </div>
+</div>
+
+<!-- SQL Modal -->
+<div class="mo" id="msql">
+  <div class="md" style="max-width:480px;text-align:left;max-height:80vh;overflow-y:auto">
+    <div class="mdt" style="text-align:center;margin-bottom:12px">Script SQL — Supabase</div>
+    <pre id="sqlpre" style="background:#1f2937;color:#a3e635;padding:14px;border-radius:10px;font-size:11px;overflow-x:auto;white-space:pre-wrap;line-height:1.5"></pre>
+    <div class="mact" style="margin-top:14px">
+      <button class="btn btns" onclick="closeMod('msql')">Fechar</button>
+      <button class="btn btnp" onclick="copySql()">Copiar SQL</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ LOGIN ============================================================ -->
+<div class="view active" id="vl">
+  <div class="lbox">
+    <div class="lic">🌽</div>
+    <div class="lt">Festival do Milho</div>
+    <div class="ls">Selecione seu caixa para começar</div>
+    <div class="opg" id="opg"></div>
+    <div id="pins" style="display:none">
+      <div class="pinl" id="pinl">Digite seu PIN</div>
+      <div class="pd">
+        <div class="pdot" id="d0"></div>
+        <div class="pdot" id="d1"></div>
+        <div class="pdot" id="d2"></div>
+        <div class="pdot" id="d3"></div>
+      </div>
+      <div class="pp">
+        <button class="pk" onclick="kp('1')">1</button>
+        <button class="pk" onclick="kp('2')">2</button>
+        <button class="pk" onclick="kp('3')">3</button>
+        <button class="pk" onclick="kp('4')">4</button>
+        <button class="pk" onclick="kp('5')">5</button>
+        <button class="pk" onclick="kp('6')">6</button>
+        <button class="pk" onclick="kp('7')">7</button>
+        <button class="pk" onclick="kp('8')">8</button>
+        <button class="pk" onclick="kp('9')">9</button>
+        <button class="pk adm" onclick="openAdm()">Admin</button>
+        <button class="pk" onclick="kp('0')">0</button>
+        <button class="pk del" onclick="kdel()">⌫</button>
+      </div>
+    </div>
+    <div class="login-extras">
+      <button class="login-extra-btn btn-kitchen" onclick="openKitchen()">🍳 Cozinha</button>
+      <button class="login-extra-btn btn-admin-login" onclick="openAdm()">⚙️ Admin</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ SALES ============================================================ -->
+<div class="view" id="vs">
+  <div class="sh">
+    <div class="shi">
+      <div class="sht">🌽 Festival do Milho</div>
+      <div class="sho" id="hop">Operador: —</div>
+    </div>
+    <div class="hact">
+      <div class="syncd" id="synd">
+        <div class="sd off" id="sdd"></div>
+        <span style="font-size:11px;color:rgba(255,255,255,.8)" id="sdt">offline</span>
+      </div>
+      <button class="ib" onclick="goLogin()">🚪</button>
+      <div class="cba">
+        <button class="ib" onclick="toggleCart()" id="ctb">🛒</button>
+        <div class="cbc" id="cbc" style="display:none">0</div>
+      </div>
+    </div>
+  </div>
+  <div class="sc">
+    <div class="ps" id="pgrid"></div>
+    <div class="cs" id="cside">
+      <div class="ch">🛒 Carrinho</div>
+      <div class="ci" id="citems"></div>
+      <div class="cf">
+        <div class="ctr">
+          <span class="ctl">Total</span>
+          <span class="ctv" id="ctot">R$ 0,00</span>
+        </div>
+        <div class="pbs">
+          <button class="pb cash" onclick="doSale('dinheiro')">
+            <span class="pbi">💵</span><span>Dinheiro</span>
+          </button>
+          <button class="pb pix" onclick="openPix()">
+            <span class="pbi">📱</span><span>PIX</span>
+          </button>
+        </div>
+        <button class="cc" onclick="clearCart()">Limpar carrinho</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ KITCHEN ============================================================ -->
+<div class="view" id="vk">
+  <div class="kh">
+    <button class="ib" style="background:rgba(0,0,0,.15)" onclick="goLogin()">←</button>
+    <div class="kht">🍳 Controle de Estoque</div>
+    <div style="font-size:11px;opacity:.8" id="ksts"></div>
+  </div>
+  <div class="ktip">
+    💡 Toque no produto para alternar entre <strong>Disponível</strong> e <strong>Esgotado</strong>.<br>
+    O caixa será avisado <strong>automaticamente</strong> em tempo real.
+  </div>
+  <div class="kgrid-wrap">
+    <div class="pg" id="kgrid"></div>
+  </div>
+</div>
+
+<!-- ============================================================ ADMIN ============================================================ -->
+<div class="view" id="va">
+  <div class="ah">
+    <button class="ib" onclick="goLogin()">←</button>
+    <div class="aht">Painel Administrativo</div>
+    <button class="ib" onclick="syncNow()">🔄</button>
+  </div>
+  <div class="ac">
+
+    <div class="as">
+      <div class="ash">📊 Resumo Geral <button class="eye-btn" id="eye-btn" onclick="toggleShowData()" title="Ocultar/exibir valores">👁</button></div>
+      <div class="sg">
+        <div class="sb"><div class="sv" id="stv">0</div><div class="sl">Vendas</div></div>
+        <div class="sb"><div class="sv" id="str">R$0</div><div class="sl">Faturamento</div></div>
+        <div class="sb"><div class="sv" id="stc">R$0</div><div class="sl">💵 Dinheiro</div></div>
+        <div class="sb"><div class="sv" id="stp">R$0</div><div class="sl">📱 PIX</div></div>
+      </div>
+    </div>
+
+    <div class="as">
+      <div class="ash">📈 Relatórios Detalhados</div>
+      <div id="rep-content" style="padding:14px"></div>
+    </div>
+
+    <div class="as">
+      <div class="ash">
+        Vendas
+        <div class="exb">
+          <button class="eb csv" onclick="expData('csv')">⬇ CSV</button>
+          <button class="eb xls" onclick="expData('xls')">⬇ XLS</button>
+        </div>
+      </div>
+      <div class="fr">
+        <select class="fsel" id="fop" onchange="renderTable()"><option value="">Todos os operadores</option></select>
+        <select class="fsel" id="fpay" onchange="renderTable()">
+          <option value="">Todos pagamentos</option>
+          <option value="dinheiro">Dinheiro</option>
+          <option value="pix">PIX</option>
+        </select>
+      </div>
+      <div class="stw">
+        <table class="st">
+          <thead><tr><th>Data/Hora</th><th>Operador</th><th>Produtos</th><th>Total</th><th>Pagto</th></tr></thead>
+          <tbody id="stbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="as">
+      <div class="ash">👤 Operadores</div>
+      <div id="oplist"></div>
+      <div class="af">
+        <input class="fi" id="nopn" placeholder="Nome" maxlength="20" style="min-width:100px">
+        <input class="fi" id="nopp" placeholder="PIN (4 dígitos)" type="tel" maxlength="4" style="width:120px">
+        <button class="ab" onclick="addOp()">+ Adicionar</button>
+      </div>
+    </div>
+
+    <div class="as">
+      <div class="ash">🛍️ Produtos</div>
+      <div id="prodlist"></div>
+      <div class="af">
+        <input class="fi" id="npe" placeholder="🌽" style="width:58px">
+        <input class="fi" id="npn" placeholder="Nome do produto" style="flex:1">
+        <input class="fi" id="npp" placeholder="R$ Preço" type="number" step="0.5" min="0" style="width:90px">
+        <input class="fi" id="npcat" placeholder="Categoria" style="width:110px">
+        <button class="ab" onclick="addProd()">+</button>
+      </div>
+    </div>
+
+    <div class="as">
+      <div class="ash">⚙️ Configurações</div>
+      <div class="sf">
+        <div class="fg">
+          <label class="fl">Chave PIX</label>
+          <input class="fi" id="cfpk" placeholder="email, CPF, CNPJ ou chave aleatória">
+          <div class="fh">Essa chave receberá todos os pagamentos via PIX</div>
+        </div>
+        <div class="fg">
+          <label class="fl">Nome do Estabelecimento (máx. 25 caracteres)</label>
+          <input class="fi" id="cfmn" placeholder="FESTIVAL DO MILHO" maxlength="25">
+        </div>
+        <div class="fg">
+          <label class="fl">Cidade (máx. 15 caracteres)</label>
+          <input class="fi" id="cfct" placeholder="SAO PAULO" maxlength="15">
+        </div>
+        <div class="fg">
+          <label class="fl">🍳 PIN da Cozinha</label>
+          <input class="fi" id="cfkp" placeholder="0000" maxlength="4" type="tel" style="letter-spacing:6px;text-align:center;font-size:18px">
+          <div class="fh">PIN para os ajudantes acessarem o controle de estoque (padrão: 0000)</div>
+        </div>
+        <div class="fg">
+          <label class="fl">🔗 Supabase URL</label>
+          <input class="fi" id="cfsu" placeholder="https://xxxx.supabase.co">
+        </div>
+        <div class="fg">
+          <label class="fl">🔑 Supabase Anon Key</label>
+          <input class="fi" id="cfsk" placeholder="eyJhbGci...">
+          <div class="fh">Project Settings → API → anon / public</div>
+        </div>
+        <div class="fg">
+          <label class="fl">🔒 Nova senha admin</label>
+          <input class="fi" id="cfap" type="password" placeholder="deixe em branco para não alterar">
+        </div>
+        <button class="btn btnp" onclick="saveConf()" style="width:100%">💾 Salvar Configurações</button>
+        <div class="fh" style="margin-top:10px;text-align:center">
+          <a href="#" onclick="showSQL();return false" style="color:#1d4ed8">Ver script SQL para o Supabase →</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
+<script>
+'use strict';
+
+// ===================== CONFIG =====================
+let CFG = {
+  pixKey:'', pixName:'FESTIVAL DO MILHO', pixCity:'SAO PAULO',
+  adminPass:'admin123', kitchenPin:'0000',
+  sbUrl:'', sbKey:''
+};
+
+// ===================== DEFAULT DATA =====================
+const DPRODS = [
+  {id:'p1',name:'Milho Cozido',price:5,emoji:'🌽',cat:'Milho'},
+  {id:'p2',name:'Milho Assado',price:6,emoji:'🔥',cat:'Milho'},
+  {id:'p3',name:'Pamonha Salgada',price:8,emoji:'🫙',cat:'Pamonha'},
+  {id:'p4',name:'Pamonha Doce',price:8,emoji:'🍬',cat:'Pamonha'},
+  {id:'p5',name:'Curau',price:6,emoji:'🥣',cat:'Sobremesas'},
+  {id:'p6',name:'Bolo de Milho',price:6,emoji:'🎂',cat:'Sobremesas'},
+  {id:'p7',name:'Canjica',price:7,emoji:'🍮',cat:'Sobremesas'},
+  {id:'p8',name:'Mingau',price:5,emoji:'☕',cat:'Sobremesas'},
+  {id:'p9',name:'Caldo de Milho',price:7,emoji:'🍲',cat:'Bebidas'},
+  {id:'p10',name:'Refrigerante',price:5,emoji:'🥤',cat:'Bebidas'},
+  {id:'p11',name:'Água',price:3,emoji:'💧',cat:'Bebidas'},
+  {id:'p12',name:'Pipoca',price:5,emoji:'🍿',cat:'Snacks'},
+];
+const DOPS = [{id:'op1',name:'Caixa 1',pin:'1111'},{id:'op2',name:'Caixa 2',pin:'2222'}];
+
+// ===================== STATE =====================
+const S = {
+  op:null, selOp:null, pin:'', kpin:'',
+  cart:[], prods:[], ops:[], sales:[],
+  status:{},   // product_id → true = esgotado
+  pixPayload:'', sb:null,
+  showData: false
+};
+
+// ===================== INDEXEDDB =====================
+const DB = (() => {
+  let db;
+  const open = () => new Promise((res,rej) => {
+    const r = indexedDB.open('fmilho',3);
+    r.onupgradeneeded = e => {
+      const d = e.target.result;
+      ['products','operators','settings','product_status'].forEach(s => {
+        if (!d.objectStoreNames.contains(s)) d.createObjectStore(s,{keyPath:'id'});
+      });
+      if (!d.objectStoreNames.contains('sales')) {
+        const ss = d.createObjectStore('sales',{keyPath:'id'});
+        ss.createIndex('synced','synced',{unique:false});
+      }
+    };
+    r.onsuccess = e => { db=e.target.result; res(); };
+    r.onerror = () => rej(r.error);
+  });
+  const tx = (s,m='readonly') => db.transaction(s,m).objectStore(s);
+  const all = s => new Promise((res,rej) => { const r=tx(s).getAll(); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });
+  const put = (s,d) => new Promise((res,rej) => { const r=tx(s,'readwrite').put(d); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); });
+  const del = (s,id) => new Promise((res,rej) => { const r=tx(s,'readwrite').delete(id); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); });
+  const getSetting = k => new Promise(res => { const r=tx('settings').get(k); r.onsuccess=()=>res(r.result?r.result.v:null); r.onerror=()=>res(null); });
+  const setSetting = (k,v) => put('settings',{id:k,v});
+  const unsynced = () => new Promise(res => { const r=tx('sales').index('synced').getAll(0); r.onsuccess=()=>res(r.result); r.onerror=()=>res([]); });
+  return {open,all,put,del,getSetting,setSetting,unsynced};
+})();
+
+// ===================== PIX =====================
+function crc16(s){let c=0xFFFF;for(let i=0;i<s.length;i++){c^=s.charCodeAt(i)<<8;for(let j=0;j<8;j++)c=(c&0x8000)?((c<<1)^0x1021):(c<<1);c&=0xFFFF;}return c.toString(16).toUpperCase().padStart(4,'0');}
+function emv(id,v){return id+String(v.length).padStart(2,'0')+v;}
+function pixPayload(amount){
+  const key=CFG.pixKey.trim();
+  if(!key)return null;
+  const name=CFG.pixName.trim().substring(0,25).toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const city=CFG.pixCity.trim().substring(0,15).toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const ma=emv('00','BR.GOV.BCB.PIX')+emv('01',key);
+  const ad=emv('05','FM'+Date.now().toString(36).toUpperCase().slice(-8));
+  let p=emv('00','01')+emv('01','12')+emv('26',ma)+emv('52','0000')+emv('53','986')+emv('54',amount.toFixed(2))+emv('58','BR')+emv('59',name)+emv('60',city)+emv('62',ad)+'6304';
+  return p+crc16(p);
+}
+
+// ===================== UTILS =====================
+function fmoney(v){return 'R$ '+v.toFixed(2).replace('.',',');}
+function fshort(v){return v>=1000?'R$'+(v/1000).toFixed(1)+'k':'R$'+v.toFixed(0);}
+function toast(msg,ms=2600){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('s');setTimeout(()=>el.classList.remove('s'),ms);}
+function showView(id){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function closeMod(id){document.getElementById(id).classList.remove('on');}
+
+// ===================== LOGIN =====================
+function renderOps(){
+  const g=document.getElementById('opg');
+  g.innerHTML='';
+  S.ops.forEach(op=>{
+    const init=op.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    const b=document.createElement('button');
+    b.className='opb';
+    b.innerHTML=`<div class="opa">${init}</div><div class="opn">${op.name}</div>`;
+    b.onclick=()=>selOp(op,b);
+    g.appendChild(b);
+  });
+}
+
+function selOp(op,btn){
+  S.selOp=op; S.pin='';
+  document.querySelectorAll('.opb').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  document.getElementById('pins').style.display='block';
+  document.getElementById('pinl').textContent='PIN de '+op.name;
+  updDots();
+}
+
+function updDots(){for(let i=0;i<4;i++)document.getElementById('d'+i).classList.toggle('f',i<S.pin.length);}
+
+function kp(d){
+  if(!S.selOp){toast('Selecione um operador');return;}
+  if(S.pin.length>=4)return;
+  S.pin+=d; updDots();
+  if(S.pin.length===4)setTimeout(tryLogin,180);
+}
+function kdel(){S.pin=S.pin.slice(0,-1);updDots();}
+
+function tryLogin(){
+  if(S.pin===S.selOp.pin){
+    S.op=S.selOp;
+    document.getElementById('hop').textContent='Operador: '+S.op.name;
+    showView('vs');
+    renderProds();
+    updSyncUI();
+  } else {
+    toast('❌ PIN incorreto');
+    S.pin=''; updDots();
+  }
+}
+
+function openAdm(){document.getElementById('admpin').value='';document.getElementById('madm').classList.add('on');setTimeout(()=>document.getElementById('admpin').focus(),100);}
+function closeAdm(){closeMod('madm');}
+async function checkAdm(){
+  if(document.getElementById('admpin').value===CFG.adminPass){closeAdm();await loadAdmin();showView('va');}
+  else toast('❌ Senha incorreta');
+}
+
+function goLogin(){
+  S.op=null;S.selOp=null;S.pin='';S.cart=[];S.kpin='';
+  document.getElementById('pins').style.display='none';
+  updDots();
+  showView('vl');
+}
+
+// ===================== KITCHEN ACCESS =====================
+function openKitchen(){
+  S.kpin='';
+  updKDots();
+  document.getElementById('mkitch').classList.add('on');
+}
+
+function updKDots(){for(let i=0;i<4;i++)document.getElementById('kd'+i).classList.toggle('f',i<S.kpin.length);}
+
+function kkp(d){
+  if(S.kpin.length>=4)return;
+  S.kpin+=d; updKDots();
+  if(S.kpin.length===4)setTimeout(checkKitchenPin,180);
+}
+function kkdel(){S.kpin=S.kpin.slice(0,-1);updKDots();}
+
+function checkKitchenPin(){
+  if(S.kpin===CFG.kitchenPin){
+    closeMod('mkitch');
+    renderKGrid();
+    showView('vk');
+  } else {
+    toast('❌ PIN incorreto');
+    S.kpin=''; updKDots();
+  }
+}
+
+// ===================== KITCHEN GRID =====================
+function renderKGrid(){
+  const g=document.getElementById('kgrid');
+  g.innerHTML='';
+  const prods=S.prods.filter(p=>p.active!==false);
+  prods.forEach(p=>{
+    const esg=!!S.status[p.id];
+    const card=document.createElement('div');
+    card.className='pc kcard'+(esg?' esg':'');
+    card.onclick=()=>toggleStatus(p);
+    card.innerHTML=`
+      <div class="k-badge ${esg?'k-esg':'k-avail'}">${esg?'ESGOTADO':'OK'}</div>
+      <div class="pe">${p.emoji||'🌽'}</div>
+      <div class="pn">${p.name}</div>
+      <div class="ppr">${esg?'❌ Acabou':fmoney(p.price)}</div>`;
+    g.appendChild(card);
+  });
+}
+
+async function toggleStatus(prod){
+  const esg=!S.status[prod.id];
+  S.status[prod.id]=esg;
+  await DB.put('product_status',{id:prod.id,esgotado:esg});
+
+  // Broadcast para outras abas (mesmo dispositivo)
+  try{new BroadcastChannel('fm').postMessage({type:'status',id:prod.id,esg});}catch(e){}
+
+  // Sync para Supabase
+  if(S.sb&&navigator.onLine){
+    S.sb.from('product_status').upsert({product_id:prod.id,esgotado:esg,updated_at:new Date().toISOString()}).then(()=>{}).catch(()=>{});
+  }
+
+  renderKGrid();
+  const t=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('ksts').textContent='Atualizado '+t;
+}
+
+// ===================== ALERT ACABOU =====================
+function showAlertAcabou(prod){
+  document.getElementById('aa-prod').textContent=(prod.emoji||'🌽')+' '+prod.name;
+  const el=document.getElementById('aalert');
+  el.classList.add('on');
+  if(navigator.vibrate)navigator.vibrate([300,100,300,100,300]);
+  setTimeout(()=>el.classList.remove('on'),6000);
+}
+
+// ===================== PRODUCTS (SALES SCREEN) =====================
+function renderProds(){
+  const g=document.getElementById('pgrid');
+  g.innerHTML='';
+  const cats=[...new Set(S.prods.filter(p=>p.active!==false).map(p=>p.cat||'Outros'))];
+  cats.forEach(cat=>{
+    const ps=S.prods.filter(p=>(p.cat||'Outros')===cat&&p.active!==false);
+    const lbl=document.createElement('div');
+    lbl.className='cl';lbl.textContent=cat;
+    g.appendChild(lbl);
+    const grid=document.createElement('div');
+    grid.className='pg';
+    ps.forEach(p=>{
+      const qty=S.cart.find(c=>c.id===p.id)?.qty||0;
+      const esg=!!S.status[p.id];
+      const card=document.createElement('div');
+      card.className='pc'+(esg?' esgotado':'');
+      card.id='pc-'+p.id;
+      card.onclick=()=>{if(esg)toast('⚠️ '+p.name+' está esgotado');else addToCart(p);};
+      card.innerHTML=`
+        ${esg?'<div class="esg-lbl">⛔ ESGOTADO</div>':qty>0?`<div class="pq">${qty}</div>`:''}
+        <div class="pe">${p.emoji||'🌽'}</div>
+        <div class="pn">${p.name}</div>
+        <div class="ppr">${esg?'Indisponível':fmoney(p.price)}</div>`;
+      grid.appendChild(card);
+    });
+    g.appendChild(grid);
+  });
+}
+
+function updateCard(id){
+  const card=document.getElementById('pc-'+id);
+  if(!card)return;
+  const esg=!!S.status[id];
+  const qty=S.cart.find(c=>c.id===id)?.qty||0;
+  const p=S.prods.find(p=>p.id===id);
+  if(!p)return;
+  card.className='pc'+(esg?' esgotado':'');
+  card.onclick=()=>{if(esg)toast('⚠️ '+p.name+' está esgotado');else addToCart(p);};
+  const old=card.querySelector('.pq,.esg-lbl');if(old)old.remove();
+  if(esg){const l=document.createElement('div');l.className='esg-lbl';l.textContent='⛔ ESGOTADO';card.prepend(l);}
+  else if(qty>0){const q=document.createElement('div');q.className='pq';q.textContent=qty;card.prepend(q);}
+  card.querySelector('.ppr').textContent=esg?'Indisponível':fmoney(p.price);
+}
+
+// ===================== CART =====================
+function addToCart(p){
+  const i=S.cart.findIndex(c=>c.id===p.id);
+  if(i>=0)S.cart[i].qty++;else S.cart.push({...p,qty:1});
+  updCartUI();updateCard(p.id);
+  if(navigator.vibrate)navigator.vibrate(18);
+}
+
+function chgQty(id,d){
+  const i=S.cart.findIndex(c=>c.id===id);if(i<0)return;
+  S.cart[i].qty+=d;if(S.cart[i].qty<=0)S.cart.splice(i,1);
+  updCartUI();updateCard(id);
+}
+
+function clearCart(){const had=S.cart.length>0;S.cart=[];updCartUI();if(had)renderProds();}
+function cartTotal(){return S.cart.reduce((s,i)=>s+i.price*i.qty,0);}
+function cartCount(){return S.cart.reduce((s,i)=>s+i.qty,0);}
+
+function updCartUI(){
+  const tot=cartTotal(),cnt=cartCount();
+  document.getElementById('ctot').textContent=fmoney(tot);
+  const cbc=document.getElementById('cbc');
+  if(cnt>0){cbc.style.display='flex';cbc.textContent=cnt;}else cbc.style.display='none';
+  renderCartItems();
+}
+
+function renderCartItems(){
+  const c=document.getElementById('citems');
+  if(!S.cart.length){c.innerHTML='<div class="cem"><div class="cei">🛒</div><div>Nenhum item</div></div>';return;}
+  c.innerHTML=S.cart.map(i=>`
+    <div class="cit">
+      <div class="cie">${i.emoji||'🌽'}</div>
+      <div class="cii"><div class="cin">${i.name}</div><div class="cip">${fmoney(i.price)} × ${i.qty} = ${fmoney(i.price*i.qty)}</div></div>
+      <div class="cic">
+        <button class="qb m" onclick="chgQty('${i.id}',-1)">−</button>
+        <span class="qn">${i.qty}</span>
+        <button class="qb p" onclick="chgQty('${i.id}',1)">+</button>
+      </div>
+    </div>`).join('');
+}
+
+function toggleCart(){
+  const s=document.getElementById('cside'),o=document.getElementById('cov');
+  const open=s.classList.toggle('open');o.classList.toggle('on',open);
+}
+
+// ===================== SALE =====================
+async function doSale(method){
+  if(!S.cart.length){toast('Adicione produtos');return;}
+  const total=cartTotal();
+  const sale={
+    id:'s'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+    opId:S.op.id,opName:S.op.name,
+    items:S.cart.map(i=>({id:i.id,name:i.name,price:i.price,qty:i.qty})),
+    total,method,at:new Date().toISOString(),synced:0
+  };
+  await DB.put('sales',sale);
+  clearCart();
+  document.getElementById('cside').classList.remove('open');
+  document.getElementById('cov').classList.remove('on');
+  document.getElementById('succ-v').textContent=`${fmoney(total)} — ${method==='pix'?'PIX':'Dinheiro'}`;
+  const el=document.getElementById('succ');el.classList.add('on');setTimeout(()=>el.classList.remove('on'),2100);
+  trySyncSB();
+}
+
+// ===================== PIX =====================
+function openPix(){
+  if(!S.cart.length){toast('Adicione produtos');return;}
+  if(!CFG.pixKey){toast('⚠️ Configure a Chave PIX no Admin');return;}
+  const total=cartTotal();
+  const payload=pixPayload(total);
+  if(!payload){toast('Erro ao gerar PIX');return;}
+  S.pixPayload=payload;
+  document.getElementById('pxa').textContent=fmoney(total);
+  const qc=document.getElementById('pxq');qc.innerHTML='';
+  try{new QRCode(qc,{text:payload,width:200,height:200,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});}
+  catch(e){qc.innerHTML='<div style="padding:20px;color:red;font-size:12px">Erro ao gerar QR</div>';}
+  document.getElementById('pxcopy').textContent=payload.length>50?payload.substring(0,50)+'… (toque para copiar)':'📋 '+payload;
+  document.getElementById('mpix').classList.add('on');
+}
+function closePix(){closeMod('mpix');}
+async function confirmPix(){closePix();await doSale('pix');}
+function copyPix(){
+  if(!S.pixPayload)return;
+  const copy=t=>{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);};
+  if(navigator.clipboard)navigator.clipboard.writeText(S.pixPayload).then(()=>toast('✅ Código PIX copiado!')).catch(()=>{copy(S.pixPayload);toast('✅ Copiado!');});
+  else{copy(S.pixPayload);toast('✅ Código PIX copiado!');}
+}
+
+// ===================== SUPABASE =====================
+function initSB(){
+  if(!CFG.sbUrl||!CFG.sbKey)return;
+  try{if(typeof window.supabase!=='undefined'){S.sb=window.supabase.createClient(CFG.sbUrl,CFG.sbKey);subscribeRealtime();}}
+  catch(e){console.warn('Supabase:',e);}
+}
+
+async function trySyncSB(){
+  if(!navigator.onLine||!S.sb)return;
+  try{
+    const uns=await DB.unsynced();
+    for(const sale of uns){
+      const{error}=await S.sb.from('sales').upsert({id:sale.id,operator_id:sale.opId,operator_name:sale.opName,items:sale.items,total:sale.total,payment_method:sale.method,created_at:sale.at});
+      if(!error){sale.synced=1;await DB.put('sales',sale);}
+    }
+    updSyncUI();
+  }catch(e){console.warn('Sync:',e);}
+}
+
+async function loadStatusFromSB(){
+  if(!S.sb||!navigator.onLine)return;
+  try{
+    const{data}=await S.sb.from('product_status').select('*');
+    if(data){for(const r of data){S.status[r.product_id]=r.esgotado;await DB.put('product_status',{id:r.product_id,esgotado:r.esgotado});}}
+  }catch(e){}
+}
+
+function subscribeRealtime(){
+  if(!S.sb)return;
+  S.sb.channel('prod-status')
+    .on('postgres_changes',{event:'*',schema:'public',table:'product_status'},payload=>{
+      if(!payload.new)return;
+      const{product_id,esgotado}=payload.new;
+      const wasAvail=!S.status[product_id];
+      S.status[product_id]=esgotado;
+      DB.put('product_status',{id:product_id,esgotado});
+      const vsActive=document.getElementById('vs').classList.contains('active');
+      const vkActive=document.getElementById('vk').classList.contains('active');
+      if(vsActive){updateCard(product_id);if(esgotado&&wasAvail){const p=S.prods.find(p=>p.id===product_id);if(p)showAlertAcabou(p);}}
+      if(vkActive)renderKGrid();
+    })
+    .subscribe();
+
+  // BroadcastChannel — mesma aba/dispositivo
+  try{
+    const bc=new BroadcastChannel('fm');
+    bc.onmessage=e=>{
+      if(e.data.type!=='status')return;
+      const{id,esg}=e.data;
+      const wasAvail=!S.status[id];
+      S.status[id]=esg;
+      const vsActive=document.getElementById('vs').classList.contains('active');
+      const vkActive=document.getElementById('vk').classList.contains('active');
+      if(vsActive){updateCard(id);if(esg&&wasAvail){const p=S.prods.find(p=>p.id===id);if(p)showAlertAcabou(p);}}
+      if(vkActive)renderKGrid();
+    };
+  }catch(e){}
+}
+
+async function syncNow(){toast('🔄 Sincronizando...');await trySyncSB();await loadAdmin();toast('✅ Sincronização concluída');}
+
+function updSyncUI(){
+  const dot=document.getElementById('sdd'),txt=document.getElementById('sdt');
+  if(!dot)return;
+  if(!navigator.onLine){dot.className='sd off';txt.textContent='offline';}
+  else if(!S.sb){dot.className='sd ok';txt.textContent='local';}
+  else{dot.className='sd ok';txt.textContent='online';}
+}
+
+// ===================== ADMIN =====================
+async function loadAdmin(){
+  S.sales=await DB.all('sales');
+  S.sales.sort((a,b)=>b.at.localeCompare(a.at));
+  renderStats();renderReports();renderTable();renderOpList();renderProdList();loadConf();popOpFilter();
+}
+
+function renderStats(){
+  const s=S.sales;
+  const mask=v=>S.showData?v:'••••';
+  document.getElementById('stv').textContent=s.length;
+  document.getElementById('str').textContent=mask(fshort(s.reduce((a,v)=>a+v.total,0)));
+  document.getElementById('stc').textContent=mask(fshort(s.filter(v=>v.method==='dinheiro').reduce((a,v)=>a+v.total,0)));
+  document.getElementById('stp').textContent=mask(fshort(s.filter(v=>v.method==='pix').reduce((a,v)=>a+v.total,0)));
+  const eyeBtn=document.getElementById('eye-btn');
+  if(eyeBtn)eyeBtn.textContent=S.showData?'🙈':'👁';
+}
+
+function toggleShowData(){S.showData=!S.showData;renderStats();renderReports();}
+
+function renderReports(){
+  const c=document.getElementById('rep-content');
+  if(!c)return;
+  if(!S.sales.length){c.innerHTML='<div style="text-align:center;padding:20px;color:#9ca3af">Nenhuma venda registrada ainda</div>';return;}
+  const mask=v=>S.showData?v:'••••';
+
+  // Ranking de produtos
+  const pm={};
+  S.sales.forEach(sale=>sale.items.forEach(item=>{
+    if(!pm[item.name])pm[item.name]={name:item.name,qty:0,rev:0};
+    pm[item.name].qty+=item.qty;
+    pm[item.name].rev+=item.price*item.qty;
+  }));
+  const prods=Object.values(pm).sort((a,b)=>b.rev-a.rev).slice(0,5);
+  const maxRev=prods[0]?.rev||1;
+
+  // Pagamentos
+  const total=S.sales.length;
+  const pixN=S.sales.filter(s=>s.method==='pix').length;
+  const cashN=total-pixN;
+  const pixP=total?Math.round((pixN/total)*100):0;
+  const cashP=100-pixP;
+
+  // Por operador
+  const om={};
+  S.sales.forEach(s=>{
+    if(!om[s.opName])om[s.opName]={name:s.opName,count:0,total:0};
+    om[s.opName].count++;om[s.opName].total+=s.total;
+  });
+  const ops=Object.values(om).sort((a,b)=>b.total-a.total);
+
+  c.innerHTML=`
+    <div style="margin-bottom:20px">
+      <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:10px">🏆 Produtos Mais Vendidos</div>
+      ${prods.length?prods.map((p,i)=>`
+        <div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+            <span style="font-weight:600">${i+1}. ${p.name}</span>
+            <span style="color:#6b7280">${p.qty} un · ${mask(fmoney(p.rev))}</span>
+          </div>
+          <div class="rbar-wrap"><div class="rbar" style="background:var(--y);width:${Math.round((p.rev/maxRev)*100)}%"></div></div>
+        </div>`).join(''):'<div style="color:#9ca3af;font-size:13px">Sem dados</div>'}
+    </div>
+
+    <div style="margin-bottom:20px">
+      <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:10px">💳 Formas de Pagamento</div>
+      <div style="display:flex;border-radius:8px;overflow:hidden;height:26px;margin-bottom:8px">
+        ${cashP>0?`<div style="background:#16a34a;width:${cashP}%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">${cashP>12?cashP+'%':''}</div>`:''}
+        ${pixP>0?`<div style="background:#1d4ed8;width:${pixP}%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">${pixP>12?pixP+'%':''}</div>`:''}
+      </div>
+      <div style="display:flex;gap:16px;font-size:12px;color:#374151">
+        <span>💵 Dinheiro: ${cashN} vendas (${cashP}%)</span>
+        <span>📱 PIX: ${pixN} vendas (${pixP}%)</span>
+      </div>
+    </div>
+
+    <div>
+      <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:10px">👤 Por Operador</div>
+      ${ops.map(op=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f3f4f6">
+          <div style="width:34px;height:34px;border-radius:50%;background:var(--y);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;flex-shrink:0">${op.name.substring(0,2).toUpperCase()}</div>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:13px">${op.name}</div>
+            <div style="font-size:11px;color:#6b7280">${op.count} ${op.count===1?'venda':'vendas'}</div>
+          </div>
+          <div style="font-size:16px;font-weight:800;color:var(--g)">${mask(fmoney(op.total))}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function popOpFilter(){
+  const sel=document.getElementById('fop');
+  const ops=[...new Set(S.sales.map(s=>s.opName))].filter(Boolean);
+  sel.innerHTML='<option value="">Todos os operadores</option>'+ops.map(o=>`<option>${o}</option>`).join('');
+}
+
+function renderTable(){
+  const body=document.getElementById('stbody');
+  const opF=document.getElementById('fop').value,pyF=document.getElementById('fpay').value;
+  let sales=S.sales;
+  if(opF)sales=sales.filter(s=>s.opName===opF);
+  if(pyF)sales=sales.filter(s=>s.method===pyF);
+  if(!sales.length){body.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:#9ca3af">Nenhuma venda</td></tr>';return;}
+  body.innerHTML=sales.map(s=>{
+    const dt=new Date(s.at);
+    return `<tr>
+      <td>${dt.toLocaleDateString('pt-BR')}<br><small style="color:#9ca3af">${dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</small> ${s.synced?'☁️':'📱'}</td>
+      <td>${s.opName||'—'}</td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.items.map(i=>`${i.name}(${i.qty})`).join(', ')}</td>
+      <td style="font-weight:700">${fmoney(s.total)}</td>
+      <td><span class="pb2 ${s.method}">${s.method==='pix'?'PIX':'Dinheiro'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ===================== EXPORT =====================
+function buildRows(sales){
+  const hdr=['Data','Hora','Operador','Produtos','Qtd Items','Total R$','Pagamento','Sincronizado'];
+  return[hdr,...sales.map(s=>{
+    const dt=new Date(s.at);
+    return[dt.toLocaleDateString('pt-BR'),dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),s.opName||'',s.items.map(i=>`${i.name}(${i.qty})`).join('; '),s.items.reduce((a,i)=>a+i.qty,0),s.total.toFixed(2),s.method==='pix'?'PIX':'Dinheiro',s.synced?'Sim':'Não'];
+  })];
+}
+
+function dl(content,name,mime){const url=URL.createObjectURL(new Blob([content],{type:mime}));const a=document.createElement('a');a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);}
+
+function expData(fmt){
+  const opF=document.getElementById('fop').value,pyF=document.getElementById('fpay').value;
+  let sales=S.sales;
+  if(opF)sales=sales.filter(s=>s.opName===opF);
+  if(pyF)sales=sales.filter(s=>s.method===pyF);
+  if(!sales.length){toast('Nenhuma venda para exportar');return;}
+  const rows=buildRows(sales);
+  if(fmt==='csv'){
+    dl('﻿'+rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n'),'vendas-festival-milho.csv','text/csv;charset=utf-8');
+    toast('📊 CSV exportado!');
+  }else{
+    const xml=`<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Vendas"><Table>${rows.map(r=>`<Row>${r.map(c=>{const n=!isNaN(c)&&c!=='';return`<Cell><Data ss:Type="${n?'Number':'String'}">${String(c).replace(/&/g,'&amp;').replace(/</g,'&lt;')}</Data></Cell>`;}).join('')}</Row>`).join('')}</Table></Worksheet></Workbook>`;
+    dl(xml,'vendas-festival-milho.xls','application/vnd.ms-excel');
+    toast('📊 XLS exportado!');
+  }
+}
+
+// ===================== OPERATORS =====================
+function renderOpList(){
+  document.getElementById('oplist').innerHTML=S.ops.map(o=>`
+    <div class="oli" id="oprow-${o.id}">
+      <div class="ola">${o.name.substring(0,2).toUpperCase()}</div>
+      <div class="oln">${o.name}</div>
+      <span class="opin">PIN: ${o.pin}</span>
+      <button class="edit-btn" onclick="editOp('${o.id}')">✏️</button>
+      <button class="db" onclick="delOp('${o.id}')">Remover</button>
+    </div>`).join('');
+}
+
+function editOp(id){
+  const op=S.ops.find(o=>o.id===id);if(!op)return;
+  document.getElementById('oprow-'+id).innerHTML=`
+    <div class="ola">${op.name.substring(0,2).toUpperCase()}</div>
+    <input class="fi" id="en-${id}" value="${op.name}" maxlength="20" style="flex:1;padding:6px 10px;font-size:13px">
+    <input class="fi" id="ep-${id}" value="${op.pin}" maxlength="4" type="tel" style="width:72px;padding:6px 8px;font-size:14px;text-align:center;letter-spacing:4px">
+    <button class="ab" style="padding:6px 12px;font-size:13px" onclick="saveOp('${id}')">Salvar</button>
+    <button class="db" onclick="renderOpList()">✕</button>`;
+}
+
+async function saveOp(id){
+  const name=document.getElementById('en-'+id).value.trim();
+  const pin=document.getElementById('ep-'+id).value.trim();
+  if(!name||pin.length!==4||isNaN(pin)){toast('Nome e PIN de 4 dígitos obrigatórios');return;}
+  const op=S.ops.find(o=>o.id===id);
+  op.name=name;op.pin=pin;
+  await DB.put('operators',op);
+  renderOpList();renderOps();
+  toast('✅ Operador atualizado');
+}
+async function addOp(){
+  const name=document.getElementById('nopn').value.trim(),pin=document.getElementById('nopp').value.trim();
+  if(!name||pin.length!==4||isNaN(pin)){toast('Nome e PIN de 4 dígitos obrigatórios');return;}
+  const op={id:'op_'+Date.now(),name,pin};
+  await DB.put('operators',op);S.ops.push(op);renderOpList();renderOps();
+  document.getElementById('nopn').value='';document.getElementById('nopp').value='';
+  toast('✅ Operador adicionado');
+}
+async function delOp(id){
+  if(!confirm('Remover este operador?'))return;
+  await DB.del('operators',id);S.ops=S.ops.filter(o=>o.id!==id);renderOpList();renderOps();
+}
+
+// ===================== PRODUCTS =====================
+function renderProdList(){
+  document.getElementById('prodlist').innerHTML=S.prods.map(p=>`
+    <div class="pli">
+      <div class="ple">${p.emoji||'🌽'}</div>
+      <div class="pli-i"><div class="pln">${p.name} <small style="color:#9ca3af">[${p.cat||'—'}]</small></div><div class="plp">${fmoney(p.price)}</div></div>
+      <button class="db" onclick="delProd('${p.id}')">Remover</button>
+    </div>`).join('');
+}
+async function addProd(){
+  const emoji=document.getElementById('npe').value.trim()||'🌽';
+  const name=document.getElementById('npn').value.trim();
+  const price=parseFloat(document.getElementById('npp').value);
+  const cat=document.getElementById('npcat').value.trim()||'Produtos';
+  if(!name||isNaN(price)||price<=0){toast('Nome e preço obrigatórios');return;}
+  const p={id:'pr_'+Date.now(),name,price,emoji,cat,active:true};
+  await DB.put('products',p);S.prods.push(p);renderProdList();
+  ['npe','npn','npp','npcat'].forEach(id=>document.getElementById(id).value='');
+  toast('✅ Produto adicionado');
+}
+async function delProd(id){
+  if(!confirm('Remover este produto?'))return;
+  await DB.del('products',id);S.prods=S.prods.filter(p=>p.id!==id);renderProdList();
+}
+
+// ===================== SETTINGS =====================
+function loadConf(){
+  document.getElementById('cfpk').value=CFG.pixKey;
+  document.getElementById('cfmn').value=CFG.pixName;
+  document.getElementById('cfct').value=CFG.pixCity;
+  document.getElementById('cfkp').value=CFG.kitchenPin;
+  document.getElementById('cfsu').value=CFG.sbUrl;
+  document.getElementById('cfsk').value=CFG.sbKey;
+  document.getElementById('cfap').value='';
+}
+async function saveConf(){
+  CFG.pixKey=document.getElementById('cfpk').value.trim();
+  CFG.pixName=document.getElementById('cfmn').value.trim()||'FESTIVAL DO MILHO';
+  CFG.pixCity=document.getElementById('cfct').value.trim()||'SAO PAULO';
+  CFG.kitchenPin=document.getElementById('cfkp').value.trim()||'0000';
+  CFG.sbUrl=document.getElementById('cfsu').value.trim();
+  CFG.sbKey=document.getElementById('cfsk').value.trim();
+  const np=document.getElementById('cfap').value;if(np)CFG.adminPass=np;
+  await DB.setSetting('cfg',CFG);
+  initSB();updSyncUI();
+  toast('✅ Configurações salvas!');
+}
+
+// ===================== SQL =====================
+const SQL_SCRIPT=`-- Execute no Supabase: SQL Editor → New query
+
+-- Tabela de vendas
+create table if not exists sales (
+  id text primary key,
+  operator_id text,
+  operator_name text not null,
+  items jsonb not null default '[]',
+  total numeric(10,2) not null,
+  payment_method text not null,
+  created_at timestamptz not null,
+  synced_at timestamptz default now()
+);
+
+-- Tabela de status de estoque (NOVO)
+create table if not exists product_status (
+  product_id text primary key,
+  esgotado boolean default false,
+  updated_at timestamptz default now()
+);
+
+-- Segurança RLS
+alter table sales enable row level security;
+alter table product_status enable row level security;
+
+create policy "inserir vendas" on sales for insert with check (true);
+create policy "ler vendas" on sales for select using (true);
+
+create policy "ler status" on product_status for select using (true);
+create policy "inserir status" on product_status for insert with check (true);
+create policy "atualizar status" on product_status for update using (true);
+
+-- Habilitar Realtime para a tabela de estoque
+alter publication supabase_realtime add table product_status;
+
+-- Índices
+create index if not exists sales_at_idx on sales (created_at desc);
+create index if not exists sales_op_idx on sales (operator_name);`;
+
+function showSQL(){document.getElementById('sqlpre').textContent=SQL_SCRIPT;document.getElementById('msql').classList.add('on');}
+function copySql(){if(navigator.clipboard)navigator.clipboard.writeText(SQL_SCRIPT).then(()=>toast('✅ SQL copiado!'));}
+
+// ===================== OFFLINE =====================
+function updOffline(){document.getElementById('ob').classList.toggle('on',!navigator.onLine);updSyncUI();}
+
+// ===================== INIT =====================
+async function init(){
+  await DB.open();
+  const savedCfg=await DB.getSetting('cfg');if(savedCfg)Object.assign(CFG,savedCfg);
+
+  S.ops=await DB.all('operators');
+  if(!S.ops.length){for(const o of DOPS)await DB.put('operators',o);S.ops=[...DOPS];}
+
+  S.prods=await DB.all('products');
+  if(!S.prods.length){for(const p of DPRODS)await DB.put('products',p);S.prods=[...DPRODS];}
+
+  // Carrega status de produtos do IndexedDB
+  const statuses=await DB.all('product_status');
+  statuses.forEach(s=>{S.status[s.id]=s.esgotado;});
+
+  initSB();
+
+  // Busca status atualizado do Supabase
+  if(navigator.onLine)loadStatusFromSB();
+
+  renderOps();updOffline();
+
+  window.addEventListener('online',()=>{updOffline();trySyncSB();loadStatusFromSB();});
+  window.addEventListener('offline',updOffline);
+
+  document.getElementById('admpin').addEventListener('keydown',e=>{if(e.key==='Enter')checkAdm();});
+
+  setInterval(()=>{if(navigator.onLine)trySyncSB();},45000);
+
+  if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+init();
+</script>
+</body>
+</html>

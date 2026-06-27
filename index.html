@@ -126,6 +126,7 @@ button{cursor:pointer;border:none;font-family:inherit}
 .pbi{font-size:22px}
 .pb.cash{background:#dcfce7;color:var(--g)}
 .pb.pix{background:#eff6ff;color:#1d4ed8}
+.pb.card{background:#f5f3ff;color:#7c3aed}
 .cc{width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:8px;background:transparent;color:var(--gr);font-size:13px}
 
 @media(max-width:640px){
@@ -191,6 +192,7 @@ button{cursor:pointer;border:none;font-family:inherit}
 .pb2{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
 .pb2.dinheiro{background:#dcfce7;color:var(--g)}
 .pb2.pix{background:#dbeafe;color:#1d4ed8}
+.pb2.cartao{background:#f5f3ff;color:#7c3aed}
 .sf{padding:14px}
 .fg{margin-bottom:14px}
 .fl{display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px}
@@ -249,6 +251,26 @@ button{cursor:pointer;border:none;font-family:inherit}
 </div>
 
 <div id="cov" onclick="toggleCart()"></div>
+
+<!-- Cash Modal -->
+<div class="mo" id="mcash">
+  <div class="md">
+    <div class="mdt">💵 Pagamento em Dinheiro</div>
+    <div class="mds">Total da venda</div>
+    <div style="font-size:32px;font-weight:800;color:var(--g);margin-bottom:16px" id="cash-total-disp"></div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px" id="cash-quick"></div>
+    <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Valor recebido (opcional)</label>
+    <input type="number" id="cash-recv" class="fi" placeholder="0,00" step="0.01" min="0" style="font-size:22px;text-align:center;margin-bottom:12px" oninput="calcTroco()">
+    <div id="troco-box" style="display:none;border-radius:12px;padding:14px;text-align:center;margin-bottom:14px">
+      <div style="font-size:13px;color:#6b7280;margin-bottom:2px">Troco</div>
+      <div style="font-size:30px;font-weight:800" id="troco-val">R$ 0,00</div>
+    </div>
+    <div class="mact">
+      <button class="btn btns" onclick="closeMod('mcash')">Cancelar</button>
+      <button class="btn btnp" onclick="confirmCash()">✅ Confirmar</button>
+    </div>
+  </div>
+</div>
 
 <!-- PIX Modal -->
 <div class="mo" id="mpix">
@@ -384,12 +406,15 @@ button{cursor:pointer;border:none;font-family:inherit}
           <span class="ctl">Total</span>
           <span class="ctv" id="ctot">R$ 0,00</span>
         </div>
-        <div class="pbs">
-          <button class="pb cash" onclick="doSale('dinheiro')">
+        <div class="pbs" style="grid-template-columns:1fr 1fr 1fr">
+          <button class="pb cash" onclick="openCash()">
             <span class="pbi">💵</span><span>Dinheiro</span>
           </button>
           <button class="pb pix" onclick="openPix()">
             <span class="pbi">📱</span><span>PIX</span>
+          </button>
+          <button class="pb card" onclick="doSale('cartao')">
+            <span class="pbi">💳</span><span>Cartão</span>
           </button>
         </div>
         <button class="cc" onclick="clearCart()">Limpar carrinho</button>
@@ -430,6 +455,7 @@ button{cursor:pointer;border:none;font-family:inherit}
         <div class="sb"><div class="sv" id="str">R$0</div><div class="sl">Faturamento</div></div>
         <div class="sb"><div class="sv" id="stc">R$0</div><div class="sl">💵 Dinheiro</div></div>
         <div class="sb"><div class="sv" id="stp">R$0</div><div class="sl">📱 PIX</div></div>
+        <div class="sb" style="grid-column:span 2"><div class="sv" id="stk">R$0</div><div class="sl">💳 Cartão</div></div>
       </div>
     </div>
 
@@ -452,6 +478,7 @@ button{cursor:pointer;border:none;font-family:inherit}
           <option value="">Todos pagamentos</option>
           <option value="dinheiro">Dinheiro</option>
           <option value="pix">PIX</option>
+          <option value="cartao">Cartão</option>
         </select>
       </div>
       <div class="stw">
@@ -497,10 +524,6 @@ button{cursor:pointer;border:none;font-family:inherit}
           <input class="fi" id="cfmn" placeholder="FESTIVAL DO MILHO" maxlength="25">
         </div>
         <div class="fg">
-          <label class="fl">Cidade (máx. 15 caracteres)</label>
-          <input class="fi" id="cfct" placeholder="SAO PAULO" maxlength="15">
-        </div>
-        <div class="fg">
           <label class="fl">🍳 PIN da Cozinha</label>
           <input class="fi" id="cfkp" placeholder="0000" maxlength="4" type="tel" style="letter-spacing:6px;text-align:center;font-size:18px">
           <div class="fh">PIN para os ajudantes acessarem o controle de estoque (padrão: 0000)</div>
@@ -527,7 +550,7 @@ button{cursor:pointer;border:none;font-family:inherit}
 
 // ===================== CONFIG =====================
 let CFG = {
-  pixKey:'', pixName:'FESTIVAL DO MILHO', pixCity:'SAO PAULO',
+  pixKey:'', pixName:'FESTIVAL DO MILHO', pixCity:'IPATINGA',
   adminPass:'admin123', kitchenPin:'0000',
   sbUrl:'https://yhomwizqpwwrxqymobtr.supabase.co',
   sbKey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlob213aXpxcHd3cnhxeW1vYnRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzOTI4MDQsImV4cCI6MjA5Nzk2ODgwNH0.M11NEXQt0BLCGh77dtg7-5uw3ynmyJ0xkl9oqwz7Ero'
@@ -853,6 +876,53 @@ async function doSale(method){
   trySyncSB();
 }
 
+// ===================== CASH / TROCO =====================
+function openCash(){
+  if(!S.cart.length){toast('Adicione produtos');return;}
+  const total=cartTotal();
+  document.getElementById('cash-total-disp').textContent=fmoney(total);
+  document.getElementById('cash-recv').value='';
+  document.getElementById('troco-box').style.display='none';
+
+  const rounds=[5,10,20,50,100,200];
+  const quicks=[total];
+  for(const r of rounds){if(r*Math.ceil(total/r)>total)quicks.push(r*Math.ceil(total/r));if(quicks.length>=4)break;}
+  document.getElementById('cash-quick').innerHTML=quicks.slice(0,4).map(v=>
+    `<button onclick="setCash(${v})" style="padding:10px 4px;border-radius:10px;background:#f0fdf4;color:var(--g);font-size:13px;font-weight:700;border:2px solid #bbf7d0;cursor:pointer">${v===total?'Exato':fmoney(v)}</button>`
+  ).join('');
+
+  document.getElementById('mcash').classList.add('on');
+  setTimeout(()=>document.getElementById('cash-recv').focus(),150);
+}
+
+function setCash(v){
+  document.getElementById('cash-recv').value=v.toFixed(2);
+  calcTroco();
+}
+
+function calcTroco(){
+  const total=cartTotal();
+  const recv=parseFloat(document.getElementById('cash-recv').value)||0;
+  const box=document.getElementById('troco-box');
+  const val=document.getElementById('troco-val');
+  if(recv<=0){box.style.display='none';return;}
+  box.style.display='block';
+  const troco=recv-total;
+  if(troco>=0){
+    box.style.background='#f0fdf4';val.style.color='var(--g)';val.textContent=fmoney(troco);
+  }else{
+    box.style.background='#fef2f2';val.style.color='var(--r)';val.textContent='⚠️ Valor insuficiente';
+  }
+}
+
+async function confirmCash(){
+  const total=cartTotal();
+  const recv=parseFloat(document.getElementById('cash-recv').value)||0;
+  if(recv>0&&recv<total){toast('⚠️ Valor recebido menor que o total');return;}
+  closeMod('mcash');
+  await doSale('dinheiro');
+}
+
 // ===================== PIX =====================
 function openPix(){
   if(!S.cart.length){toast('Adicione produtos');return;}
@@ -960,6 +1030,7 @@ function renderStats(){
   document.getElementById('str').textContent=mask(fshort(s.reduce((a,v)=>a+v.total,0)));
   document.getElementById('stc').textContent=mask(fshort(s.filter(v=>v.method==='dinheiro').reduce((a,v)=>a+v.total,0)));
   document.getElementById('stp').textContent=mask(fshort(s.filter(v=>v.method==='pix').reduce((a,v)=>a+v.total,0)));
+  document.getElementById('stk').textContent=mask(fshort(s.filter(v=>v.method==='cartao').reduce((a,v)=>a+v.total,0)));
   const eyeBtn=document.getElementById('eye-btn');
   if(eyeBtn)eyeBtn.textContent=S.showData?'🙈':'👁';
 }
@@ -985,9 +1056,11 @@ function renderReports(){
   // Pagamentos
   const total=S.sales.length;
   const pixN=S.sales.filter(s=>s.method==='pix').length;
-  const cashN=total-pixN;
+  const cardN=S.sales.filter(s=>s.method==='cartao').length;
+  const cashN=total-pixN-cardN;
   const pixP=total?Math.round((pixN/total)*100):0;
-  const cashP=100-pixP;
+  const cardP=total?Math.round((cardN/total)*100):0;
+  const cashP=100-pixP-cardP;
 
   // Por operador
   const om={};
@@ -1015,10 +1088,12 @@ function renderReports(){
       <div style="display:flex;border-radius:8px;overflow:hidden;height:26px;margin-bottom:8px">
         ${cashP>0?`<div style="background:#16a34a;width:${cashP}%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">${cashP>12?cashP+'%':''}</div>`:''}
         ${pixP>0?`<div style="background:#1d4ed8;width:${pixP}%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">${pixP>12?pixP+'%':''}</div>`:''}
+        ${cardP>0?`<div style="background:#7c3aed;width:${cardP}%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">${cardP>12?cardP+'%':''}</div>`:''}
       </div>
-      <div style="display:flex;gap:16px;font-size:12px;color:#374151">
-        <span>💵 Dinheiro: ${cashN} vendas (${cashP}%)</span>
-        <span>📱 PIX: ${pixN} vendas (${pixP}%)</span>
+      <div style="display:flex;gap:12px;font-size:12px;color:#374151;flex-wrap:wrap">
+        <span>💵 Dinheiro: ${cashN} (${cashP}%)</span>
+        <span>📱 PIX: ${pixN} (${pixP}%)</span>
+        <span>💳 Cartão: ${cardN} (${cardP}%)</span>
       </div>
     </div>
 
@@ -1056,7 +1131,7 @@ function renderTable(){
       <td>${s.opName||'—'}</td>
       <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.items.map(i=>`${i.name}(${i.qty})`).join(', ')}</td>
       <td style="font-weight:700">${fmoney(s.total)}</td>
-      <td><span class="pb2 ${s.method}">${s.method==='pix'?'PIX':'Dinheiro'}</span></td>
+      <td><span class="pb2 ${s.method}">${s.method==='pix'?'PIX':s.method==='cartao'?'Cartão':'Dinheiro'}</span></td>
     </tr>`;
   }).join('');
 }
@@ -1066,7 +1141,7 @@ function buildRows(sales){
   const hdr=['Data','Hora','Operador','Produtos','Qtd Items','Total R$','Pagamento','Sincronizado'];
   return[hdr,...sales.map(s=>{
     const dt=new Date(s.at);
-    return[dt.toLocaleDateString('pt-BR'),dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),s.opName||'',s.items.map(i=>`${i.name}(${i.qty})`).join('; '),s.items.reduce((a,i)=>a+i.qty,0),s.total.toFixed(2),s.method==='pix'?'PIX':'Dinheiro',s.synced?'Sim':'Não'];
+    return[dt.toLocaleDateString('pt-BR'),dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),s.opName||'',s.items.map(i=>`${i.name}(${i.qty})`).join('; '),s.items.reduce((a,i)=>a+i.qty,0),s.total.toFixed(2),s.method==='pix'?'PIX':s.method==='cartao'?'Cartão':'Dinheiro',s.synced?'Sim':'Não'];
   })];
 }
 
@@ -1163,14 +1238,12 @@ async function delProd(id){
 function loadConf(){
   document.getElementById('cfpk').value=CFG.pixKey;
   document.getElementById('cfmn').value=CFG.pixName;
-  document.getElementById('cfct').value=CFG.pixCity;
   document.getElementById('cfkp').value=CFG.kitchenPin;
   document.getElementById('cfap').value='';
 }
 async function saveConf(){
   CFG.pixKey=document.getElementById('cfpk').value.trim();
   CFG.pixName=document.getElementById('cfmn').value.trim()||'FESTIVAL DO MILHO';
-  CFG.pixCity=document.getElementById('cfct').value.trim()||'SAO PAULO';
   CFG.kitchenPin=document.getElementById('cfkp').value.trim()||'0000';
   const np=document.getElementById('cfap').value;if(np)CFG.adminPass=np;
   await DB.setSetting('cfg',CFG);
